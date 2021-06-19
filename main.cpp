@@ -38,29 +38,37 @@ void TestReserveConstructor() {
 }
 
 void TestReserveMethod() {
-    SimpleVector<int> v;
-    // зарезервируем 5 мест в векторе
-    v.Reserve(5);
-    assert(v.GetCapacity() == 5);
-    assert(v.IsEmpty());
+    {
+        SimpleVector<int> v;
+        // зарезервируем 5 мест в векторе
+        v.Reserve(5);
+        assert(v.GetCapacity() == 5);
+        assert(v.IsEmpty());
 
-    // попытаемся уменьшить capacity до 1
-    v.Reserve(1);
-    // capacity должно остаться прежним
-    assert(v.GetCapacity() == 5);
-    // поместим 10 элементов в вектор
-    for (int i = 0; i < 10; ++i) {
-        v.PushBack(i);
+        // попытаемся уменьшить capacity до 1
+        v.Reserve(1);
+        // capacity должно остаться прежним
+        assert(v.GetCapacity() == 5);
+        // поместим 10 элементов в вектор
+        for (int i = 0; i < 10; ++i) {
+            v.PushBack(i);
+        }
+        assert(v.GetSize() == 10);
+        // увеличим capacity до 100
+        v.Reserve(100);
+        // проверим, что размер не поменялся
+        assert(v.GetSize() == 10);
+        assert(v.GetCapacity() == 100);
+        // проверим, что элементы на месте
+        for (int i = 0; i < 10; ++i) {
+            assert(v[i] == i);
+        }
     }
-    assert(v.GetSize() == 10);
-    // увеличим capacity до 100
-    v.Reserve(100);
-    // проверим, что размер не поменялся
-    assert(v.GetSize() == 10);
-    assert(v.GetCapacity() == 100);
-    // проверим, что элементы на месте
-    for (int i = 0; i < 10; ++i) {
-        assert(v[i] == i);
+    {
+        SimpleVector<int> v(5);
+        assert(v.GetSize() == 5);
+        v.Reserve(3);
+        assert(v.GetSize() == 5);
     }
 }
 
@@ -426,5 +434,6 @@ int main() {
     TestNoncopiablePushBack();
     TestNoncopiableInsert();
     TestNoncopiableErase();
+
     return 0;
 }

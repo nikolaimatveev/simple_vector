@@ -1,34 +1,37 @@
 ﻿#pragma once
 
-#include <stdexcept>
-#include <algorithm>
+#include <cstddef>
 #include <utility>
 
 // Умный указатель, удаляющий связанный объект при своём разрушении.
-// Параметр шаблона T задаёт тип объекта, на который ссылается указатель
+// Параметр шаблона Type задаёт тип объекта, на который ссылается указатель
 template <typename Type>
-class ArraydPtr {
+class ArrayPtr {
 public:
     // Конструктор по умолчанию создаёт нулевой указатель,
     // так как поле ptr_ имеет значение по умолчанию nullptr
-    ArraydPtr() = default;
+    ArrayPtr() = default;
 
-    // Создаёт указатель, ссылающийся на переданный raw_ptr.
-    // raw_ptr ссылается либо на объект, созданный в куче при помощи new,
-    // либо является нулевым указателем
-    // Спецификатор noexcept обозначает, что метод не бросает исключений
-    explicit ArraydPtr(Type* raw_ptr) noexcept {
-        ptr_ = raw_ptr;
+    explicit ArrayPtr(std::size_t size) {
+        ptr_ = new Type[size]();
     }
 
-    // Удаляем у класса конструктор копирования
-    ArraydPtr(const ArraydPtr&) = delete ;
-    // Конструктор копирования для move
-    ArraydPtr(ArraydPtr&& other) noexcept : ptr_(std::exchange(other.ptr_, nullptr))
+    explicit ArrayPtr(Type* raw_ptr) noexcept 
+        : ptr_(raw_ptr) 
     {
     }
 
-    ArraydPtr& operator=(ArraydPtr&& other) noexcept {
+    // Удаляем у класса конструктор копирования
+    ArrayPtr(const ArrayPtr&) = delete ;
+    // Конструктор копирования для move
+    ArrayPtr(ArrayPtr&& other) noexcept 
+        : ptr_(std::exchange(other.ptr_, nullptr))
+    {
+    }
+
+    ArrayPtr& operator=(ArrayPtr&) = delete;
+
+    ArrayPtr& operator=(ArrayPtr&& other) noexcept {
         if (this != &other) {
             ptr_ = std::exchange(other.ptr_, nullptr);
         }
@@ -36,12 +39,12 @@ public:
     }
 
     // Деструктор. Удаляет объект, на который ссылается умный указатель.
-    ~ArraydPtr() {
+    ~ArrayPtr() {
         delete [] ptr_;
     }
 
     // Возвращает указатель, хранящийся внутри ArraydPtr
-    Type* GetRawPtr() const noexcept {
+    Type* Get() const noexcept {
         return ptr_;
     }
 
@@ -59,55 +62,16 @@ public:
         return ptr_ != nullptr;
     }
 
-    // Оператор разыменования возвращает ссылку на объект
-    // Выбрасывает исключение std::logic_error, если указатель нулевой
-    Type& operator*() const {
-        if (*this) {
-            return *ptr_;
-        }
-        else {
-            throw std::logic_error("Point to zero");
-        }
-    }
-
-    // Оператор -> должен возвращать указатель на объект
-    // Выбрасывает исключение std::logic_error, если указатель нулевой
-    Type* operator->() const {
-        if (*this) {
-            return ptr_;
-        }
-        else {
-            throw std::logic_error("Point to zero");
-        }
-    }
-
-    Type& operator[](size_t index) {
+    Type& operator[](std::size_t index) noexcept {
         return ptr_[index];
     }
 
-    const Type& operator[](size_t index) const {
+    const Type& operator[](std::size_t index) const noexcept {
         return ptr_[index];
     }
 
-    ArraydPtr& operator=(ArraydPtr& right) {
-        if (this != &right) {
-            this->Swap(right);
-        }
-        return *this;
-    }
-
-    ArraydPtr& operator=(Type* right_ptr) noexcept {
-        this->Swap(right_ptr);
-        return *this;
-    }
-
     // Обменивает состояние текущего объекта с other без выбрасывания исключений
-    void Swap(Type* other_ptr) noexcept {
-        std::swap(ptr_, other_ptr);
-    }
-
-    // Обменивает состояние текущего объекта с other без выбрасывания исключений
-    void Swap(ArraydPtr& other) noexcept {
+    void swap(ArrayPtr& other) noexcept {
         std::swap(ptr_, other.ptr_);
     }
 
