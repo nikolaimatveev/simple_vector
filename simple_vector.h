@@ -10,10 +10,6 @@
 
 class ReserveProxyObj {
 public:
-    ReserveProxyObj() = default;
-
-    ReserveProxyObj(size_t capacity) : capacity_(capacity) {
-    }
     size_t capacity_ = 0;
 };
 
@@ -37,8 +33,10 @@ public:
     {
     }
 
-    explicit SimpleVector(const ReserveProxyObj& reserve) : SimpleVector(reserve.capacity_) {
-        size_ = 0;
+    explicit SimpleVector(const ReserveProxyObj& reserve) 
+        : capacity_(reserve.capacity_),
+        items_(reserve.capacity_)
+    {
     }
 
     // Создаёт вектор из size элементов, инициализированных значением value
@@ -152,10 +150,11 @@ public:
             std::fill(begin() + size_, begin() + new_size, Type());
         }
         else if(new_size > capacity_){
-            capacity_ = std::max(new_size, 2 * capacity_);
-            ArrayPtr<Type> copy(capacity_);
-            std::copy(begin(), end(), copy.Get());
+            auto new_capacity = std::max(new_size, 2 * capacity_);
+            ArrayPtr<Type> copy(new_capacity);
+            std::move(begin(), end(), copy.Get());
             items_.swap(copy);
+            capacity_ = new_capacity;
         }
         size_ = new_size;
     }
@@ -164,10 +163,10 @@ public:
     //Если new_capacity > capacity_ нужно выделить новое место под массив и скопировать все элементы
     void Reserve(size_t new_capacity) {
         if (new_capacity > capacity_) {
-            capacity_ = new_capacity;
-            ArrayPtr<Type> copy(capacity_);
-            std::copy(begin(), end(), copy.Get());
+            ArrayPtr<Type> copy(new_capacity);
+            std::move(begin(), end(), copy.Get());
             items_.swap(copy);
+            capacity_ = new_capacity;
         }
     }
 
@@ -228,7 +227,7 @@ public:
     Iterator Insert(ConstIterator pos, const Type& value) {
         size_t index = pos - begin();
         Resize(size_ + 1);
-        std::copy_backward(begin() + index, end() - 1, end());
+        std::move_backward(begin() + index, end() - 1, end());
         items_[index] = value;
         return &items_[index];
     }
@@ -254,8 +253,8 @@ public:
 
     // Удаляет элемент вектора в указанной позиции
     Iterator Erase(ConstIterator pos) {
-        size_t index = pos - begin();
         assert(pos != end());
+        size_t index = pos - begin();
         std::move(begin() + index + 1, end(), begin() + index);
         --size_;
         return &items_[index];
@@ -270,10 +269,11 @@ public:
 private:
     void ResizeBeforeMove(size_t new_size) {
         if (new_size > capacity_) {
-            capacity_ = std::max(new_size, 2 * capacity_);
-            ArrayPtr<Type> copy(capacity_);
+            auto new_capacity = std::max(new_size, 2 * capacity_);
+            ArrayPtr<Type> copy(new_capacity);
             std::move(begin(), end(), copy.Get());
             items_.swap(copy);
+            capacity_ = new_capacity;
         }
         size_ = new_size;
     }

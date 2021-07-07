@@ -12,8 +12,9 @@ public:
     // так как поле ptr_ имеет значение по умолчанию nullptr
     ArrayPtr() = default;
 
-    explicit ArrayPtr(std::size_t size) {
-        ptr_ = new Type[size]();
+    explicit ArrayPtr(std::size_t size) 
+        : ptr_(new Type[size]()) 
+    {
     }
 
     explicit ArrayPtr(Type* raw_ptr) noexcept 
@@ -33,6 +34,7 @@ public:
 
     ArrayPtr& operator=(ArrayPtr&& other) noexcept {
         if (this != &other) {
+            ArrayPtr<Type> copy(std::move(ptr_));
             ptr_ = std::exchange(other.ptr_, nullptr);
         }
         return *this;
@@ -40,7 +42,7 @@ public:
 
     // Деструктор. Удаляет объект, на который ссылается умный указатель.
     ~ArrayPtr() {
-        delete [] ptr_;
+       delete [] ptr_;
     }
 
     // Возвращает указатель, хранящийся внутри ArraydPtr
