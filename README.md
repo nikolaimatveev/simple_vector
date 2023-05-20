@@ -1,1 +1,1 @@
-# seventh_sprint
+# simple_vector
